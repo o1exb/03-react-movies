@@ -1,26 +1,26 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
 
-import SearchBar from "../SearchBar/SearchBar.tsx";
-import MovieGrid from "../MovieGrid/MovieGrid.tsx";
-import Loader from "../Loader/Loader.tsx";
-import ErrorMessage from "../ErrorMessage/ErrorMessage.tsx";
-import MovieModal from "../MovieModal/MovieModal.tsx";
+import SearchBar from "../SearchBar/SearchBar";
+import MovieGrid from "../MovieGrid/MovieGrid";
+import Loader from "../Loader/Loader";
+import ErrorMessage from "../ErrorMessage/ErrorMessage";
+import MovieModal from "../MovieModal/MovieModal";
 
-import type { Movie } from "../../types/movie.ts";
-import { fetchMovies } from "../../services/movieService.ts";
+import type { Movie } from "../../types/movie";
+import { fetchMovies } from "../../services/movieService";
 
 export default function App() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const [selected, setSelected] = useState<Movie | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
 
-  async function handleSearch(query: string) {
+  const handleSearch = async (query: string) => {
     setMovies([]);
-    setError(null);
+    setError(false);
 
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -30,9 +30,7 @@ export default function App() {
       setLoading(true);
       const list = await fetchMovies(query, controller.signal);
 
-      if (list.length === 0) {
-        toast("No movies found for your request.");
-      }
+      if (list.length === 0) toast("No movies found for your request.");
       setMovies(list);
     } catch (e: unknown) {
       if (
@@ -43,15 +41,13 @@ export default function App() {
         (e as { name?: string }).name === "AbortError"
       )
         return;
-      setError("fetch_error");
+      setError(true);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  useEffect(() => {
-    return () => abortRef.current?.abort();
-  }, []);
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   return (
     <>
@@ -59,7 +55,12 @@ export default function App() {
 
       {loading && <Loader />}
       {!loading && error && <ErrorMessage />}
-      {!loading && !error && (
+      {!loading && !error && movies.length === 0 && (
+        <p style={{ textAlign: "center" }}>
+          Start typing to search for movies 🎬
+        </p>
+      )}
+      {!loading && !error && movies.length > 0 && (
         <MovieGrid movies={movies} onSelect={setSelected} />
       )}
 

@@ -8,41 +8,27 @@ interface MovieModalProps {
   onClose: () => void;
 }
 
-const MODAL_ROOT = document.getElementById("modal-root")!;
-const IMG_ORIGINAL = "https://image.tmdb.org/t/p/original";
-
 export default function MovieModal({ movie, onClose }: MovieModalProps) {
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
+    const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-
-    const prev = document.body.style.overflow;
+    };
     document.body.style.overflow = "hidden";
-
+    window.addEventListener("keydown", handleEsc);
     return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "auto";
     };
   }, [onClose]);
-
-  function onBackdrop(e: React.MouseEvent<HTMLDivElement>) {
-    if (e.target === e.currentTarget) onClose();
-  }
-
-  const src = movie.backdrop_path
-    ? `${IMG_ORIGINAL}${movie.backdrop_path}`
-    : "https://via.placeholder.com/1000x600?text=No+Image";
 
   return createPortal(
     <div
       className={styles.backdrop}
+      onClick={onClose}
       role="dialog"
       aria-modal="true"
-      onClick={onBackdrop}
     >
-      <div className={styles.modal}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <button
           className={styles.closeButton}
           aria-label="Close modal"
@@ -50,14 +36,16 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
         >
           &times;
         </button>
-
-        <img src={src} alt={movie.title} className={styles.image} />
-
+        <img
+          src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
+          alt={movie.title}
+          className={styles.image}
+        />
         <div className={styles.content}>
           <h2>{movie.title}</h2>
           <p>{movie.overview}</p>
           <p>
-            <strong>Release Date:</strong> {movie.release_date || "—"}
+            <strong>Release Date:</strong> {movie.release_date}
           </p>
           <p>
             <strong>Rating:</strong> {movie.vote_average}/10
@@ -65,6 +53,6 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
         </div>
       </div>
     </div>,
-    MODAL_ROOT
+    document.body
   );
 }
