@@ -2,21 +2,20 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import styles from "./MovieModal.module.css";
 import type { Movie } from "../../types/movie";
+import { backdropUrl } from "../../services/movieService";
 
-interface MovieModalProps {
+export interface MovieModalProps {
   movie: Movie;
   onClose: () => void;
 }
 
 export default function MovieModal({ movie, onClose }: MovieModalProps) {
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
+    const onEsc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleEsc);
+    window.addEventListener("keydown", onEsc);
     return () => {
-      window.removeEventListener("keydown", handleEsc);
+      window.removeEventListener("keydown", onEsc);
       document.body.style.overflow = "auto";
     };
   }, [onClose]);
@@ -24,9 +23,9 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
   return createPortal(
     <div
       className={styles.backdrop}
-      onClick={onClose}
       role="dialog"
       aria-modal="true"
+      onClick={onClose}
     >
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <button
@@ -36,11 +35,17 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
         >
           &times;
         </button>
-        <img
-          src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
-          alt={movie.title}
-          className={styles.image}
-        />
+
+        {backdropUrl(movie.backdrop_path) ? (
+          <img
+            className={styles.image}
+            src={backdropUrl(movie.backdrop_path)}
+            alt={movie.title}
+          />
+        ) : (
+          <div className={styles.imagePlaceholder}>No backdrop</div>
+        )}
+
         <div className={styles.content}>
           <h2>{movie.title}</h2>
           <p>{movie.overview}</p>
